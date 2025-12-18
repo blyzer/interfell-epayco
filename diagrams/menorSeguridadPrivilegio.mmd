@@ -1,0 +1,14 @@
+graph LR
+subgraph "SG Configuration"
+SG_ALB["SG-ALB<br/>443 from 0.0.0.0/0<br/>80 from 0.0.0.0/0"]
+SG_ECS["SG-ECS-Apps<br/>8080 from SG-ALB<br/>443 from SG-ECS"]
+SG_RDS["SG-RDS<br/>5432 from SG-ECS<br/>5432 from SG-Bastion"]
+SG_REDIS["SG-Redis<br/>6379 from SG-ECS"]
+end
+SG_ALB -->|Allow| SG_ECS
+SG_ECS -->|Allow| SG_RDS
+SG_ECS -->|Allow| SG_REDIS
+style SG_ALB fill:#3498db
+style SG_ECS fill:#2ecc71
+style SG_RDS fill:#e74c3c
+style SG_REDIS fill:#f39c12

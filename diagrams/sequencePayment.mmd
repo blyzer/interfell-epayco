@@ -1,0 +1,51 @@
+sequenceDiagram
+actor User as Usuario
+participant Web as Navegador
+participant API as API Gateway
+participant Payment as Payment Service
+participant Wallet as Wallet Service
+participant Fraud as Fraud Service
+participant Bank as Bank Gateway
+participant Notif as Notification Service
+User->>Web: 1. Inicia pago (50 COP)
+Web->>API: POST /api/v1/payments/initiate
+API->>Payment: ValidateAndInitiate
+activate Payment
+Payment->>Payment: 2. Control de idempotencia (DynamoDB)
+Payment->>Payment: 3. Autenticar usuario (JWT)
+Payment->>Wallet: 4. Consultar saldo (50 COP available?)
+Wallet->>Wallet: Query RDS: wallet.balance >= 50
+Wallet-->>Payment: Balance OK
+Payment->>Wallet: 5. Fondos de reserva
+Wallet->>Wallet: UPDATE wallet: balance -= 50
+Wallet-->>Payment: Reservado
+Payment-->>API: Response: PENDING
+deactivate Payment
+API-->>Web: TXN_ID + Status
+Web-->>User: "Pago iniciado"
+par Fraud Check (Async)
+Payment->>Fraud: Score de Transacción
+activate Fraud
+Fraud->>Fraud: Query historial de usuario
+Fraud->>Fraud: ML Model: score = 0.23
+Fraud-->>Payment: Bajo riesgo
+deactivate Fraud
+and Bank Processing
+Payment->>Bank: POST /process-payment
+activate Bank
+Bank->>Bank: Procesar débito
+Bank-->>Payment: {status: success, auth_code: ABC123}
+deactivate Bank
+end
+Payment->>Payment: 6. Confirmar transacción
+Payment->>Payment: UPDATE: status = CONFIRMED
+Payment->>Notif: Publish: PaymentConfirmed
+activate Notif
+Notif->>User: Enviar notificación por correo electrónico
+Notif->>User: Enviar notificación por SMS
+deactivate Notif
+Payment->>Payment: 7. Almacenar clave de idempotencia (TTL: 24h)
+User->>Web: Comprobar la aplicación
+Web->>Payment: GET /payments/{TXN_ID}
+Payment-->>Web: {status: CONFIRMED, amount: 50}
+Web-->>User: "Pago confirmado"

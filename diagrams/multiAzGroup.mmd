@@ -1,0 +1,75 @@
+graph TB
+subgraph "Internet"
+USERS["Usuarios, Comercios<br/>Apps Externas"]
+end
+USERS -->|HTTP/S| ROUTE53["Route 53<br/>Geo-routing<br/>Health Checks"]
+ROUTE53 --> CF["CloudFront<br/>200+ PoPs<br/>Static Assets"]
+ROUTE53 --> APIGW["API Gateway<br/>REST Endpoints<br/>Rate Limiting"]
+CF --> ALB["ALB Internal<br/>Path-based Routing<br/>Health Checks"]
+APIGW --> ALB
+subgraph "VPC Principal (10.0.0.0/16)"
+subgraph "AZ 1: us-east-1a"
+subgraph "Subnet Pública (10.0.1.0/24)"
+NAT1["NAT Gateway"]
+end
+subgraph "Subnet Privada Apps (10.0.10.0/24)"
+ECS1["ECS Tasks<br/>Auth, Payment, Fraud"]
+end
+subgraph "Subnet Privada DB (10.0.50.0/28)"
+RDS_P["RDS Primary<br/>Read/Write"]
+end
+end
+subgraph "AZ 2: us-east-1b"
+subgraph "Subnet Pública (10.0.2.0/24)"
+NAT2["NAT Gateway"]
+end
+subgraph "Subnet Privada Apps (10.0.20.0/24)"
+ECS2["ECS Tasks<br/>Auth, Payment, Fraud"]
+end
+subgraph "Subnet Privada DB (10.0.51.0/28)"
+RDS_S1["RDS Standby<br/>Read-only"]
+end
+end
+subgraph "AZ 3: us-east-1c"
+subgraph "Subnet Pública (10.0.3.0/24)"
+NAT3["NAT Gateway"]
+end
+subgraph "Subnet Privada Apps (10.0.30.0/24)"
+ECS3["ECS Tasks<br/>Auth, Payment, Fraud"]
+end
+subgraph "Subnet Privada DB (10.0.52.0/28)"
+RDS_S2["RDS Standby<br/>Read-only"]
+end
+end
+CACHE["ElastiCache Redis<br/>Cluster Multi-AZ"]
+end
+ALB --> ECS1
+ALB --> ECS2
+ALB --> ECS3
+ECS1 --> RDS_P
+ECS2 --> RDS_P
+ECS3 --> RDS_P
+ECS1 --> CACHE
+ECS2 --> CACHE
+ECS3 --> CACHE
+RDS_P --> RDS_S1
+RDS_P --> RDS_S2
+subgraph "Shared Services VPC"
+LOGS["CloudWatch Logs<br/>Central Audit Trail"]
+KMS["KMS Keys<br/>Encryption Management"]
+end
+style USERS fill:#3498db
+style ROUTE53 fill:#9b59b6
+style CF fill:#f39c12
+style APIGW fill:#1abc9c
+style ALB fill:#e74c3c
+style ECS1 fill:#2ecc71
+style ECS2 fill:#2ecc71
+style ECS3 fill:#2ecc71
+style RDS_P fill:#34495e
+style RDS_S1 fill:#7f8c8d
+style RDS_S2 fill:#7f8c8d
+style CACHE fill:#c0392b
+style NAT1 fill:#95a5a6
+style NAT2 fill:#95a5a6
+style NAT3 fill:#95a5a6

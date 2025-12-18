@@ -1,0 +1,35 @@
+graph TB
+subgraph "Decisiones Arquitectónicas Clave"
+D1["Microservicios por Dominio<br/>Escalabilidad independiente"]
+D2["ECS Fargate<br/>Latencia baja, operacional simple"]
+D3["PostgreSQL + DynamoDB<br/>ACID local + eventual distribuida"]
+D4["SQS FIFO + SNS<br/>Orden garantizado, fanout"]
+D5["SAGA Orquestada<br/>Flujo explícito, debugging claro"]
+D6["Multi-AZ + DR<br/>RTO 5min, RPO 1hr"]
+end
+subgraph "Beneficios"
+B1["Disponibilidad ≥99.9%"]
+B2["Latencia P95 <500ms"]
+B3["Costo-efectivo"]
+B4["Observable end-to-end"]
+B5["Seguro PCI DSS"]
+B6["Escalable geográficamente"]
+end
+D1 --> B1
+D2 --> B2
+D3 --> B5
+D4 --> B4
+D5 --> B4
+D6 --> B1
+style D1 fill:#2ecc71
+style D2 fill:#2ecc71
+style D3 fill:#2ecc71
+style D4 fill:#2ecc71
+style D5 fill:#2ecc71
+style D6 fill:#2ecc71
+style B1 fill:#27ae60
+style B2 fill:#27ae60
+style B3 fill:#27ae60
+style B4 fill:#27ae60
+style B5 fill:#27ae60
+style B6 fill:#27ae60

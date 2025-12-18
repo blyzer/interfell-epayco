@@ -1,0 +1,34 @@
+timeline
+title Timeline de Pago (P95 Latencies)
+T0ms : Usuario submit pago form
+T10ms : Payment service recibe request
+: 5ms idempotency check (DynamoDB)
+: 8ms JWT validation (Auth)
+T25ms : 12ms wallet balance check (RDS read)
+: 15ms reserve funds (RDS write)
+: Total sync: 40ms
+T50ms : Response enviada a usuario
+: 10ms network latency
+T60ms : Usuario ve: Transaction ID + éxito
+: (Fraud check happening async)
+T150ms : Fraud service recibe evento
+: 30ms historical data query (RDS)
+: 40ms ML inference (cached)
+: 20ms DynamoDB writes
+: Total: ~90ms
+T250ms : Payment service enqueue a SQS
+: (Bank processing async)
+T400ms : Bank responds + ePayco confirms
+: 100ms network time
+: 100ms bank processing
+: 50ms response + parse
+: Total: ~250ms
+T420ms : Transaction update + publish
+: 5ms transaction update
+: 10ms idempotency store
+: 5ms SNS publish
+T500ms : Notifications sent (async)
+: Email enqueued
+: SMS enqueued
+T1000ms : User checks app
+: Sees "Confirmed"

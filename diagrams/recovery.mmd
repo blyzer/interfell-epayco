@@ -1,0 +1,20 @@
+graph TB
+subgraph "Primary Region: us-east-1 (Active)"
+PRIMARY["Primary ePayco<br/>RDS Primary<br/>ECS Cluster (10 tasks)<br/>ElastiCache Cluster<br/>Route 53: 100% traffic"]
+end
+subgraph "Standby Region: us-west-2 (Warm)"
+STANDBY["Standby ePayco<br/>RDS Read Replica<br/>ECS Cluster (2 tasks)<br/>ElastiCache Replica<br/>Route 53: 0% traffic"]
+end
+HEALTH["Health Checks<br/>Interval: 30 sec<br/>Threshold: 3 failures<br/>Triggers: Failover"]
+PRIMARY -->|RDS Replication<br/>Sync| STANDBY
+PRIMARY -->|ElastiCache<br/>Global Table| STANDBY
+HEALTH -->|Monitors| PRIMARY
+FAILURE["Disaster Detected<br/>Primary region down"]
+FAILURE -->|T0+30s| FAILOVER["Failover<br/>Route 53: us-east-1 → us-west-2<br/>RDS Replica → Primary<br/>ECS: 2 → 20 tasks"]
+FAILOVER -->|T0+5min| OPERATIONAL["System Operational<br/>RTO: 5 min<br/>RPO: <1 hour<br/>No data loss"]
+style PRIMARY fill:#2ecc71
+style STANDBY fill:#95a5a6
+style HEALTH fill:#f39c12
+style FAILURE fill:#e74c3c
+style FAILOVER fill:#e74c3c
+style OPERATIONAL fill:#27ae60

@@ -1,0 +1,83 @@
+graph LR
+subgraph "Payment Workflow Events"
+E1["payment.initiated<br/>Payload: user, amount, merchant"]
+E2["wallet.funds_reserved<br/>Payload: user, amount, txn_id"]
+E3["fraud.check_passed<br/>Payload: score, decision"]
+E4["payment.processing<br/>Payload: bank_request"]
+E5["payment.confirmed<br/>Payload: auth_code, status"]
+E6["payment.failed<br/>Payload: reason, error_code"]
+end
+subgraph "Subscribers"
+SUB1["Fraud Service"]
+SUB2["Notification Service"]
+SUB3["Merchant Service"]
+SUB4["Audit Service"]
+SUB5["Analytics"]
+end
+E1 -->|published| SNS1["SNS: payment.initiated"]
+E2 -->|published| SNS2["SNS: wallet.funds_reserved"]
+E3 -->|published| SNS3["SNS: fraud.check_passed"]
+E5 -->|published| SNS5["SNS: payment.confirmed"]
+SNS2 -->|subscribe| SUB1
+SNS5 -->|subscribe| SUB2
+SNS5 -->|subscribe| SUB3
+SNS1 -->|subscribe| SUB4
+SNS5 -->|subscribe| SUB5
+style E1 fill:#3498db
+style E2 fill:#3498db
+style E3 fill:#3498db
+style E4 fill:#3498db
+style E5 fill:#2ecc71
+style E6 fill:#e74c3c
+style SUB1 fill:#f39c12
+style SUB2 fill:#f39c12
+style SUB3 fill:#f39c12
+style SUB4 fill:#f39c12
+style SUB5 fill:#f39c12graph TB
+subgraph "Retry con Exponential Backoff"
+RETRY["Attempt 1<br/>Falla"]
+RETRY -->|Wait 100ms| RETRY2["Attempt 2<br/>Falla"]
+RETRY2 -->|Wait 200ms| RETRY3["Attempt 3<br/>Falla"]
+RETRY3 -->|All failed| ERR["Throw error"]
+RETRY -->|Success| OK1["Return"]
+RETRY2 -->|Success| OK2["Return"]
+RETRY3 -->|Success| OK3["Return"]
+end
+subgraph "Circuit Breaker"
+CLOSED["CLOSED<br/>Normal operation<br/>Count: 0"]
+CLOSED -->|Failure| COUNT["Count++"]
+COUNT -->|Count < 5| CLOSED
+COUNT -->|Count >= 5| OPEN["OPEN<br/>Stop calling<br/>Throw immediately"]
+OPEN -->|Wait 60s| HALF["HALF_OPEN<br/>Try recovery"]
+HALF -->|Success x2| CLOSED
+HALF -->|Failure| OPEN
+end
+subgraph "Idempotencia"
+REQ1["Request 1<br/>idempotency_key: abc123"]
+REQ1 -->|Process| RES["Response cached"]
+REQ2["Request 2<br/>idempotency_key: abc123"] -->|Duplicate| RES
+RES -->|Return cached| CLIENT["Same response<br/>No duplicate processing"]
+end
+subgraph "Bulkheads"
+QUEUE["Queue:<br/>100 requests"]
+BULKHEAD["Bulkhead: 20 concurrent<br/>..."]
+QUEUE -->|20 at a time| BULKHEAD
+BULKHEAD -->|20 complete| QUEUE
+QUEUE -->|80 waiting| MANAGED["Backpressure<br/>No resource exhaustion"]
+end
+style RETRY fill:#2ecc71
+style OK1 fill:#27ae60
+style OK2 fill:#27ae60
+style OK3 fill:#27ae60
+style ERR fill:#e74c3c
+style CLOSED fill:#2ecc71
+style OPEN fill:#e74c3c
+style HALF fill:#f39c12
+style COUNT fill:#3498db
+style REQ1 fill:#3498db
+style REQ2 fill:#3498db
+style RES fill:#2ecc71
+style CLIENT fill:#27ae60
+style QUEUE fill:#9b59b6
+style BULKHEAD fill:#2ecc71
+style MANAGED fill:#27ae60

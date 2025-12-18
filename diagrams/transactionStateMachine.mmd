@@ -1,0 +1,51 @@
+stateDiagram-v2
+[*] --> CREATED
+CREATED --> VALIDATING: Recibir solicitud de inicio
+VALIDATING --> FUNDS_RESERVED: Pase de verificación de saldo
+VALIDATING --> FAILED: Saldo insuficiente
+VALIDATING --> EXPIRED: Timeout
+FUNDS_RESERVED --> FRAUD_CHECKED: Reserva éxitoso
+FUNDS_RESERVED --> FAILED: Reserva fallida
+FUNDS_RESERVED --> EXPIRED: Timeout (TTL excedido)
+FRAUD_CHECKED --> PROCESSING: El fraude permite
+FRAUD_CHECKED --> FAILED: Bloques de fraude
+PROCESSING --> CONFIRMED: Confirmación bancaria
+PROCESSING --> FAILED: Error bancario
+PROCESSING --> FAILED_COMPENSATED: Después de la compensación
+CONFIRMED --> REFUNDED: Solicitud de reembolso del usuario
+FAILED --> FAILED_COMPENSATED: Después de la compensación
+FAILED_COMPENSATED --> [*]
+REFUNDED --> [*]
+EXPIRED --> [*]
+note right of CREATED
+Estado inicial
+Marca de tiempo registrada
+end note
+note right of VALIDATING
+Verificar autenticación de usuario
+Verificar billetera
+end note
+note right of FUNDS_RESERVED
+Cartera debitada
+Cantidad bloqueada (TTL: 10 min)
+end note
+note right of FRAUD_CHECKED
+Puntuación ML completa
+Evaluación de riesgos realizada
+end note
+note right of PROCESSING
+Llamada API bancaria en curso
+Clave de idempotencia marcada
+end note
+note right of CONFIRMED
+Estado éxitoso de terminal
+Notificaciones enviadas
+end note
+note right of FAILED
+Estado temporal
+Compensación en marcha
+end note
+note right of FAILED_COMPENSATED
+Estado de falla terminal
+Fondos liberados
+end note

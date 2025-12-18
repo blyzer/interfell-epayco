@@ -1,0 +1,21 @@
+timeline
+title Disaster Recovery Execution Timeline
+T0 : Terremoto en Mexico
+: Primary región down
+: Health checks fail
+T0+30s : Route 53 failover automático
+: DNS update propagates
+: New clients → us-east-1-qro1a
+T0+2m : Ops team alerted
+: RDS replica promoted
+: ECS scaling: 2 → 20
+T0+5m : Sistema operacional
+: RTO met (<5 min SLA)
+: Some requests queued
+T0+2h : Primary recovery
+: New RDS instance
+: Replication setup
+T0+3h : Failback to primary
+: Route 53: us-east-1-qro1a → us-east-1
+: ECS scale down: 20 → 2
+: Monitoring 30 min

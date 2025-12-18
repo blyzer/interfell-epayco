@@ -1,0 +1,57 @@
+graph TB
+subgraph "Domain Layer (Business Logic - NO frameworks)"
+AGGREGATES["Aggregates<br/>Transaction, Wallet<br/>Value Objects"]
+REPOSITORIES["Repositories<br/>(Interfaces only)<br/>ITransactionRepository"]
+SERVICES["Domain Services<br/>PaymentOrchestrator<br/>IdempotencyChecker"]
+EVENTS["Domain Events<br/>TransactionCreated<br/>PaymentProcessed"]
+ERRORS["Domain Errors<br/>InsufficientFunds<br/>FraudBlocked"]
+end
+subgraph "Application Layer (Use Cases)"
+COMMANDS["Commands<br/>InitiatePayment<br/>ConfirmPayment"]
+HANDLERS["Command Handlers<br/>Orchestrate<br/>domain services"]
+QUERIES["Queries<br/>GetTransaction"]
+DTO["DTOs<br/>Response objects"]
+end
+subgraph "Infrastructure Layer"
+direction TB
+titleText["(Technical)"]:::subtitle
+REPO_IMPL["Implementaciones de repositorio<br/>PostgresTransactionRepo<br/>DynamodbIdempotencyRepo"]
+CLIENTS["Clientes Externos<br/>BankClient<br/>FraudClient"]
+MESSAGING["Mensajería<br/>SNSEventPublisher<br/>SQSCommandPublisher"]
+CONFIG["Configuración<br/>AWS SDK<br/>Database<br/>Logging"]
+end
+subgraph "Presentation Layer (HTTP)"
+CONTROLLERS["Controllers<br/>PaymentController<br/>@Post('/payments/initiate')"]
+FILTERS["Exception Filters<br/>DomainExceptionFilter"]
+MIDDLEWARE["Middleware<br/>JWT Guard<br/>RequestId"]
+end
+AGGREGATES --> REPOSITORIES
+SERVICES --> REPOSITORIES
+SERVICES --> EVENTS
+SERVICES --> ERRORS
+COMMANDS --> HANDLERS
+HANDLERS -->|Queries| REPOSITORIES
+HANDLERS -->|Calls| SERVICES
+REPO_IMPL -->|Implements| REPOSITORIES
+CLIENTS -->|Used by| SERVICES
+MESSAGING -->|Publishes| EVENTS
+CONTROLLERS -->|Executes| COMMANDS
+CONTROLLERS -->|Uses| HANDLERS
+FILTERS -->|Catches| ERRORS
+MIDDLEWARE -->|Validates| CONTROLLERS
+style AGGREGATES fill:#3498db
+style REPOSITORIES fill:#e74c3c
+style SERVICES fill:#2ecc71
+style EVENTS fill:#f39c12
+style ERRORS fill:#c0392b
+style COMMANDS fill:#9b59b6
+style HANDLERS fill:#9b59b6
+style QUERIES fill:#9b59b6
+style DTO fill:#9b59b6
+style REPO_IMPL fill:#45db
+style CLIENTS fill:#45db
+style MESSAGING fill:#45db
+style CONFIG fill:#45db
+style CONTROLLERS fill:#1abc9c
+style FILTERS fill:#1abc9c
+style MIDDLEWARE fill:#1abc9c

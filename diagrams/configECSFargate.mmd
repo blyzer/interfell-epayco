@@ -1,0 +1,36 @@
+graph TB
+subgraph "ECS Task Definition: Payment Service"
+TD["Task Definition<br/>Name: payment-service-task<br/>Network: awsvpc<br/>CPU: 1024 (1 vCPU)<br/>Memory: 2048 MB"]
+CONTAINER["Container: payment-service<br/>Image: 123456789.dkr.ecr.../payment:v2.3.1<br/>Port: 8080<br/>Memory: 2048"]
+ENV["Environment:<br/>NODE_ENV=production<br/>LOG_LEVEL=info<br/>SERVICE_NAME=payment-service"]
+SECRETS["Secrets (via Secrets Manager):<br/>DATABASE_URL<br/>JWT_SECRET<br/>KAFKA_PASSWORD"]
+HEALTH["Health Check:<br/>Path: /health<br/>Interval: 30s<br/>Timeout: 5s<br/>Retries: 3"]
+LOGS["Logging:<br/>CloudWatch Logs<br/>Log Group: /ecs/payment-service/prod<br/>Stream Prefix: ecs"]
+end
+subgraph "ECS Service"
+SVC["Service Configuration<br/>Name: payment-service<br/>Cluster: prod-cluster<br/>Desired Count: 10<br/>Deployment: ROLLING"]
+DEPLOY["Rolling Deploy<br/>MaximumPercent: 200%<br/>MinimumHealthyPercent: 100%<br/>No interruption"]
+LB["Load Balancing:<br/>Target Group: payment-service-tg<br/>Health Check: /health"]
+DISC["Service Discovery:<br/>CloudMap<br/>Name: payment-service.prod.internal"]
+AUTO["Auto Scaling:<br/>Min: 5 tasks<br/>Max: 50 tasks<br/>Target CPU: 70%<br/>Target Memory: 75%"]
+end
+TD --> CONTAINER
+CONTAINER --> ENV
+CONTAINER --> SECRETS
+CONTAINER --> HEALTH
+CONTAINER --> LOGS
+SVC --> DEPLOY
+SVC --> LB
+SVC --> DISC
+SVC --> AUTO
+style TD fill:#2ecc71
+style CONTAINER fill:#3498db
+style ENV fill:#f39c12
+style SECRETS fill:#e74c3c
+style HEALTH fill:#9b59b6
+style LOGS fill:#1abc9c
+style SVC fill:#2ecc71
+style DEPLOY fill:#3498db
+style LB fill:#f39c12
+style DISC fill:#9b59b6
+style AUTO fill:#1abc9c

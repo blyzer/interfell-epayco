@@ -1,0 +1,25 @@
+graph TB
+subgraph "Write Path"
+APP["ECS App Task"]
+APP -->|Write-through| RDS_PRIMARY["PostgreSQL Primary<br/>RDS Multi-AZ<br/>Sync replication"]
+RDS_PRIMARY -->|Replication| RDS_STANDBY["RDS Standby<br/>(120s failover)"]
+RDS_PRIMARY -->|Async| DDB["DynamoDB<br/>Audit log"]
+end
+subgraph "Read Path"
+ANALYTICS["Analytics Tasks"]
+ANALYTICS -->|Read-only| RDS_REPLICA["RDS Read Replica<br/>for reporting"]
+end
+subgraph "Cache Layer"
+CACHE_APP["ECS Apps"]
+CACHE_APP -->|L1 Cache| REDIS["ElastiCache Redis<br/>Cluster Multi-AZ<br/>Hot data"]
+REDIS -->|Cache hits| RESPONSE["⚡ <100ms response"]
+end
+style APP fill:#3498db
+style RDS_PRIMARY fill:#34495e
+style RDS_STANDBY fill:#7f8c8d
+style DDB fill:#2ecc71
+style ANALYTICS fill:#f39c12
+style RDS_REPLICA fill:#95a5a6
+style CACHE_APP fill:#3498db
+style REDIS fill:#c0392b
+style RESPONSE fill:#27ae60

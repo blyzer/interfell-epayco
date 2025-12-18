@@ -1,0 +1,28 @@
+graph LR
+subgraph "PostgreSQL RDS"
+direction TB
+titleText["(Transaccional, ACID Local)"]:::subtitle
+TRANS["transactions<br/>ACID, índices complejos<br/>Particionado por fecha"]
+USERS["users<br/>Integridad referencial<br/>Índice único en email"]
+WALLETS["wallets<br/>Saldo crítico<br/>Optimistic locking"]
+MERCHANTS["merchants<br/>Configuración<br/>RLS por tenant"]
+AUDIT_RDS["audit_log<br/>Inmutable<br/>Append-only"]
+end
+subgraph DynamoDB["DynamoDB"]
+direction TB
+titleText["Eventual, Alta Escala"]:::subtitle
+spacer["(Transaccional, ACID Local)"]:::invisible
+FRAUD_SCORES["fraud_scores<br/>Lectura rápida<br/>TTL: 30 días"]
+SESSIONS["session_tokens<br/>JWT cache<br/>TTL: expiry"]
+NOTIF_LOG["notifications_log<br/>Auditoria<br/>TTL: 90 días"]
+IDEMPOTENCY["idempotency_keys<br/>Deduplicación<br/>TTL: 24h"]
+end
+style TRANS fill:#34e
+style USERS fill:#34e
+style WALLETS fill:#34e
+style MERCHANTS fill:#34e
+style AUDIT_RDS fill:#34e
+style FRAUD_SCORES fill:#2ecc71
+style SESSIONS fill:#2ecc71
+style NOTIF_LOG fill:#2ecc71
+style IDEMPOTENCY fill:#2ecc71

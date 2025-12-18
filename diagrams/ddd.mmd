@@ -1,0 +1,71 @@
+graph TB
+subgraph "1. AUTH SERVICE"
+AUTH_RESP["Responsabilidades:<br/>• Registro, login, logout<br/>• JWT generation (1h) + refresh (7d)<br/>• MFA: TOTP, SMS<br/>• Session management"]
+AUTH_API["API:<br/>POST /auth/register<br/>POST /auth/login<br/>POST /auth/mfa/verify<br/>POST /auth/token/refresh"]
+AUTH_DATA["Data:<br/>users (RDS)<br/>sessions (DynamoDB)"]
+AUTH_EVENTS["Events:<br/>user.created<br/>user.login<br/>mfa.enabled"]
+end
+subgraph "2. WALLET SERVICE"
+WALLET_RESP["Responsabilidades:<br/>• Gestión saldos<br/>• Carga de fondos<br/>• Retiros a banco<br/>• Reconciliación"]
+WALLET_API["API:<br/>GET /wallet/{user_id}<br/>POST /wallet/topup<br/>POST /wallet/reserve<br/>POST /wallet/release"]
+WALLET_DATA["Data:<br/>wallets (RDS)<br/>reserved_funds (DynamoDB)"]
+WALLET_EVENTS["Events:<br/>wallet.topup_initiated<br/>wallet.funds_reserved<br/>wallet.balance_updated"]
+end
+subgraph "3. TRANSACTION SERVICE"
+TRANS_RESP["Responsabilidades:<br/>• Orquestación SAGA<br/>• Procesamiento pagos<br/>• Confirmación/reversión<br/>• Reintentos"]
+TRANS_API["API:<br/>POST /payments/initiate<br/>GET /payments/{txn_id}<br/>POST /payments/{txn_id}/confirm<br/>POST /payments/{txn_id}/refund"]
+TRANS_DATA["Data:<br/>transactions (RDS)<br/>idempotency (DynamoDB)"]
+TRANS_EVENTS["Events:<br/>payment.started<br/>payment.fraud_checked<br/>payment.confirmed<br/>payment.failed"]
+end
+subgraph "4. FRAUD SERVICE"
+FRAUD_RESP["Responsabilidades:<br/>• Real-time scoring<br/>• Decision: Allow/Challenge/Deny<br/>• Rules engine<br/>• Device fingerprinting"]
+FRAUD_API["API (internal):<br/>POST /fraud/score<br/>GET /fraud/rules"]
+FRAUD_DATA["Data:<br/>fraud_models (cache)<br/>user_behavior (DynamoDB)<br/>fraud_cases (RDS)"]
+FRAUD_EVENTS["Events:<br/>fraud.risk_high<br/>fraud.risk_low<br/>fraud.suspicious"]
+end
+subgraph "5. MERCHANT SERVICE"
+MERCHANT_RESP["Responsabilidades:<br/>• Onboarding<br/>• Gestión API keys<br/>• Límites transacción<br/>• Settlement"]
+MERCHANT_API["API:<br/>POST /merchants<br/>GET /merchants/{id}<br/>GET /merchants/{id}/transactions"]
+MERCHANT_DATA["Data:<br/>merchants (RDS)<br/>settlements (RDS)<br/>api_keys (RDS)"]
+MERCHANT_EVENTS["Events:<br/>merchant.registered<br/>merchant.settlement_due"]
+end
+subgraph "6. NOTIFICATION SERVICE"
+NOTIF_RESP["Responsabilidades:<br/>• Email, SMS, Push<br/>• Webhooks<br/>• Rate limiting"]
+NOTIF_API["API (internal):<br/>POST /notify/send"]
+NOTIF_DATA["Data:<br/>notification_log (DynamoDB)<br/>user_preferences (RDS)"]
+NOTIF_INT["Integrations:<br/>AWS SES, Twilio, FCM"]
+end
+subgraph "7. AUDIT & REPORTING"
+AUDIT_RESP["Responsabilidades:<br/>• Audit trail inmutable<br/>• Compliance reports<br/>• GDPR export<br/>• Analytics"]
+AUDIT_API["API:<br/>GET /audit/trail/{user_id}<br/>GET /reports/daily<br/>POST /reports/export"]
+AUDIT_DATA["Data:<br/>audit_log (RDS append-only)<br/>reports (S3)"]
+AUDIT_EVENTS["Consumes:<br/>Todos los eventos"]
+end
+style AUTH_RESP fill:#3498db
+style AUTH_API fill:#2ecc71
+style AUTH_DATA fill:#42db
+style AUTH_EVENTS fill:#f39c12
+style WALLET_RESP fill:#3498db
+style WALLET_API fill:#2ecc71
+style WALLET_DATA fill:#42db
+style WALLET_EVENTS fill:#f39c12
+style TRANS_RESP fill:#3498db
+style TRANS_API fill:#2ecc71
+style TRANS_DATA fill:#42db
+style TRANS_EVENTS fill:#f39c12
+style FRAUD_RESP fill:#3498db
+style FRAUD_API fill:#2ecc71
+style FRAUD_DATA fill:#42db
+style FRAUD_EVENTS fill:#f39c12
+style MERCHANT_RESP fill:#3498db
+style MERCHANT_API fill:#2ecc71
+style MERCHANT_DATA fill:#42db
+style MERCHANT_EVENTS fill:#f39c12
+style NOTIF_RESP fill:#3498db
+style NOTIF_API fill:#2ecc71
+style NOTIF_DATA fill:#42db
+style NOTIF_INT fill:#f39c12
+style AUDIT_RESP fill:#3498db
+style AUDIT_API fill:#2ecc71
+style AUDIT_DATA fill:#42db
+style AUDIT_EVENTS fill:#f39c12

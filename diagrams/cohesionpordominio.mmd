@@ -1,0 +1,42 @@
+%%{init: {'flowchart': {'htmlLabels': true, 'useMaxWidth': false}}}%%
+flowchart TB
+subgraph subGraph0["ePayco Microservicios"]
+direction TB
+titleText["por Dominio"]:::subtitle
+AS["Auth Service<br>Usuarios, JWT, MFA"]
+WS["Wallet Service<br>Saldos, Reservas"]
+TS["Transaction Service<br>Flujo Pagos"]
+FS["Fraud Service<br>Detección, Scoring"]
+MS["Merchant Service<br>Onboarding, Config"]
+NS["Notification Service<br>Email, SMS, Push"]
+ARS["Audit & Reports<br>Trail inmutable"]
+end
+subgraph subGraph1["Data Layer"]
+RDS["PostgreSQL Multi-AZ<br>Transacciones, Usuarios"]
+DDB["DynamoDB<br>Caché, Sesiones"]
+CACHE["ElastiCache Redis<br>Hot Data"]
+end
+subgraph Messaging["Messaging"]
+SQS["SQS FIFO<br>Pagos, Orden garantizado"]
+SNS["SNS Topics<br>Eventos broadcast"]
+end
+AS --> RDS
+WS --> RDS & CACHE
+TS --> RDS & SQS & SNS
+FS --> DDB & SNS
+NS --> SNS
+MS --> RDS
+ARS --> RDS & DDB
+
+classDef subtitle fill:none,stroke:none,font-weight:bold;
+
+style AS fill:#3498db
+style WS fill:#2ecc71
+style TS fill:#e74c3c
+style FS fill:#f39c12
+style MS fill:#9b59b6
+style NS fill:#1abc9c
+style ARS fill:#95a5a6
+style RDS fill:#34495e
+style DDB fill:#7f8c8d
+style CACHE fill:#c0392b

@@ -1,0 +1,17 @@
+graph TB
+subgraph "WAF Protection Layers"
+RATE["Rate Limiting<br/>2000 req/5min per IP<br/>Action: 403 Block"]
+INJECTION["SQL Injection & XSS<br/>Pattern: ' OR 1=1<br/>Pattern: <script> tags<br/>Action: Block + Log"]
+GEO["Geo-Blocking<br/>Allow: Colombia, Argentina, Chile, Peru, Panamá<br/>Block: Otros países<br/>Exception: Partner IPs (España, USA)"]
+BOT["IP Reputation<br/>Managed: AWSManagedRulesBotControl<br/>Detect: Known botnets, scrapers<br/>Action: Challenge (CAPTCHA) or Block"]
+end
+LOG["CloudWatch Logs<br/>Análisis: Top blocked IPs<br/>Pattern: 5 blocks/1min = auto-blacklist"]
+RATE --> LOG
+INJECTION --> LOG
+GEO --> LOG
+BOT --> LOG
+style RATE fill:#e74c3c
+style INJECTION fill:#e74c3c
+style GEO fill:#e74c3c
+style BOT fill:#e74c3c
+style LOG fill:#3498db

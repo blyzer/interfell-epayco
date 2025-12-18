@@ -1,0 +1,17 @@
+graph TB
+subgraph "Compute Layer Decision Matrix"
+ECS["ECS Fargate<br/>Latencia: 30-60s start<br/>Costo: $0.04356/vCPU/h<br/>Operacional: AWS managed<br/>Escalado: 5-50 tasks"]
+EKS["EKS<br/>Latencia: 60-120s start<br/>Costo: +$0.10/vCPU/h fee<br/>Operacional: Manual clusters<br/>Overhead: High complexity"]
+LAMBDA["Lambda Puro<br/>Problema: 500ms-1s cold start<br/>Timeout: max 15 min<br/>Concurrencia: límite 1000<br/>P95 Checkout: Inaceptable"]
+end
+ECS -->|Selected| PAYMENT_ARCH["Payment Service<br/>Latency critical"]
+ECS -->|Selected| FRAUD_ARCH["Fraud Service<br/>State management"]
+LAMBDA -->|Eventos async| COMPENSATION["Compensations<br/>Event processors"]
+LAMBDA -->|Scheduled| BATCH["Batch fraud scoring<br/>cada 10 min"]
+style ECS fill:#2ecc71
+style EKS fill:#e74c3c
+style LAMBDA fill:#f39c12
+style PAYMENT_ARCH fill:#3498db
+style FRAUD_ARCH fill:#3498db
+style COMPENSATION fill:#9b59b6
+style BATCH fill:#9b59b6

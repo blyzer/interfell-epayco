@@ -1,0 +1,48 @@
+graph TB
+subgraph "Retry con Exponential Backoff"
+RETRY["Attempt 1<br/>Falla"]
+RETRY -->|Wait 100ms| RETRY2["Attempt 2<br/>Falla"]
+RETRY2 -->|Wait 200ms| RETRY3["Attempt 3<br/>Falla"]
+RETRY3 -->|All failed| ERR["Throw error"]
+RETRY -->|Success| OK1["Return"]
+RETRY2 -->|Success| OK2["Return"]
+RETRY3 -->|Success| OK3["Return"]
+end
+subgraph "Circuit Breaker"
+CLOSED["CLOSED<br/>Normal operation<br/>Count: 0"]
+CLOSED -->|Failure| COUNT["Count++"]
+COUNT -->|Count < 5| CLOSED
+COUNT -->|Count >= 5| OPEN["OPEN<br/>Stop calling<br/>Throw immediately"]
+OPEN -->|Wait 60s| HALF["HALF_OPEN<br/>Try recovery"]
+HALF -->|Success x2| CLOSED
+HALF -->|Failure| OPEN
+end
+subgraph "Idempotencia"
+REQ1["Request 1<br/>idempotency_key: abc123"]
+REQ1 -->|Process| RES["Response cached"]
+REQ2["Request 2<br/>idempotency_key: abc123"] -->|Duplicate| RES
+RES -->|Return cached| CLIENT["Same response<br/>No duplicate processing"]
+end
+subgraph "Bulkheads"
+QUEUE["Queue:<br/>100 requests"]
+BULKHEAD["Bulkhead: 20 concurrent<br/>..."]
+QUEUE -->|20 at a time| BULKHEAD
+BULKHEAD -->|20 complete| QUEUE
+QUEUE -->|80 waiting| MANAGED["Backpressure<br/>No resource exhaustion"]
+end
+style RETRY fill:#2ecc71
+style OK1 fill:#27ae60
+style OK2 fill:#27ae60
+style OK3 fill:#27ae60
+style ERR fill:#e74c3c
+style CLOSED fill:#2ecc71
+style OPEN fill:#e74c3c
+style HALF fill:#f39c12
+style COUNT fill:#3498db
+style REQ1 fill:#3498db
+style REQ2 fill:#3498db
+style RES fill:#2ecc71
+style CLIENT fill:#27ae60
+style QUEUE fill:#9b59b6
+style BULKHEAD fill:#2ecc71
+style MANAGED fill:#27ae60

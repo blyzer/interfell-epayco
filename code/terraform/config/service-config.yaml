@@ -1,0 +1,310 @@
+# ============================================================================
+# MICROSERVICES CONFIGURATION
+# ============================================================================
+
+services:
+  auth:
+    name: "Authentication Service"
+    description: "Handles user authentication and JWT token generation"
+    version: "1.0.0"
+    repository: "ePayco-auth"
+    ports:
+      http: 3001
+      metrics: 9001
+    health_check:
+      path: "/health"
+      interval: 30
+      timeout: 5
+      unhealthy_threshold: 3
+    environment:
+      SERVICE_NAME: "auth-service"
+      LOG_LEVEL: "info"
+      JWT_EXPIRY: "3600"
+      BCRYPT_ROUNDS: "10"
+    dependencies:
+      - database
+      - cache
+    database:
+      name: "ePayco_auth"
+      tables:
+        - "users"
+        - "sessions"
+        - "refresh_tokens"
+    cache_keys:
+      - "auth:sessions:*"
+      - "auth:users:*"
+
+  payment:
+    name: "Payment Processing Service"
+    description: "Handles payment transactions and processing"
+    version: "1.0.0"
+    repository: "ePayco-payment"
+    ports:
+      http: 3002
+      metrics: 9002
+    health_check:
+      path: "/health"
+      interval: 30
+      timeout: 5
+      unhealthy_threshold: 3
+    environment:
+      SERVICE_NAME: "payment-service"
+      LOG_LEVEL: "info"
+      PAYMENT_TIMEOUT: "30"
+      RETRY_ATTEMPTS: "3"
+    dependencies:
+      - database
+      - cache
+      - sqs
+      - sns
+    database:
+      name: "ePayco_payment"
+      tables:
+        - "transactions"
+        - "payment_methods"
+        - "invoices"
+    cache_keys:
+      - "payment:transactions:*"
+      - "payment:rates:*"
+    queue: "ePayco-payment.fifo"
+    topics:
+      - "ePayco-payment-events"
+
+  wallet:
+    name: "Wallet Management Service"
+    description: "Manages user wallets and balance operations"
+    version: "1.0.0"
+    repository: "ePayco-wallet"
+    ports:
+      http: 3003
+      metrics: 9003
+    health_check:
+      path: "/health"
+      interval: 30
+      timeout: 5
+      unhealthy_threshold: 3
+    environment:
+      SERVICE_NAME: "wallet-service"
+      LOG_LEVEL: "info"
+      MAX_TRANSACTION_AMOUNT: "10000"
+    dependencies:
+      - database
+      - cache
+      - sns
+    database:
+      name: "ePayco_wallet"
+      tables:
+        - "wallets"
+        - "transactions"
+        - "balance_history"
+    cache_keys:
+      - "wallet:balance:*"
+      - "wallet:history:*"
+    topics:
+      - "ePayco-wallet-events"
+
+  fraud:
+    name: "Fraud Detection Service"
+    description: "Monitors and detects fraudulent transactions"
+    version: "1.0.0"
+    repository: "ePayco-fraud"
+    ports:
+      http: 3004
+      metrics: 9004
+    health_check:
+      path: "/health"
+      interval: 30
+      timeout: 5
+      unhealthy_threshold: 3
+    environment:
+      SERVICE_NAME: "fraud-service"
+      LOG_LEVEL: "info"
+      FRAUD_THRESHOLD: "0.7"
+      ALERT_THRESHOLD: "0.9"
+    dependencies:
+      - database
+      - cache
+      - sns
+    database:
+      name: "ePayco_fraud"
+      tables:
+        - "fraud_logs"
+        - "suspicious_activities"
+        - "fraud_rules"
+    cache_keys:
+      - "fraud:scores:*"
+      - "fraud:rules:*"
+    topics:
+      - "ePayco-fraud-events"
+
+  merchant:
+    name: "Merchant Management Service"
+    description: "Manages merchant accounts and settlements"
+    version: "1.0.0"
+    repository: "ePayco-merchant"
+    ports:
+      http: 3005
+      metrics: 9005
+    health_check:
+      path: "/health"
+      interval: 30
+      timeout: 5
+      unhealthy_threshold: 3
+    environment:
+      SERVICE_NAME: "merchant-service"
+      LOG_LEVEL: "info"
+    dependencies:
+      - database
+      - cache
+    database:
+      name: "ePayco_merchant"
+      tables:
+        - "merchants"
+        - "settlements"
+        - "merchant_transactions"
+    cache_keys:
+      - "merchant:*"
+      - "merchant:settlements:*"
+
+  notification:
+    name: "Notification Service"
+    description: "Sends email, SMS, and push notifications"
+    version: "1.0.0"
+    repository: "ePayco-notification"
+    ports:
+      http: 3006
+      metrics: 9006
+    health_check:
+      path: "/health"
+      interval: 30
+      timeout: 5
+      unhealthy_threshold: 3
+    environment:
+      SERVICE_NAME: "notification-service"
+      LOG_LEVEL: "info"
+      EMAIL_PROVIDER: "ses"
+      SMS_PROVIDER: "twilio"
+    dependencies:
+      - database
+      - sqs
+    database:
+      name: "ePayco_notification"
+      tables:
+        - "notifications"
+        - "notification_templates"
+        - "notification_history"
+    queue: "ePayco-payment.fifo"
+
+  audit:
+    name: "Audit Logging Service"
+    description: "Logs and maintains audit trails for compliance"
+    version: "1.0.0"
+    repository: "ePayco-audit"
+    ports:
+      http: 3007
+      metrics: 9007
+    health_check:
+      path: "/health"
+      interval: 30
+      timeout: 5
+      unhealthy_threshold: 3
+    environment:
+      SERVICE_NAME: "audit-service"
+      LOG_LEVEL: "info"
+      RETENTION_DAYS: "2555"
+    dependencies:
+      - database
+    database:
+      name: "ePayco_audit"
+      tables:
+        - "audit_logs"
+        - "user_actions"
+        - "system_events"
+
+# ============================================================================
+# DATABASE CONFIGURATION
+# ============================================================================
+
+database:
+  engine: "postgresql"
+  version: "14.7"
+  parameters:
+    max_connections: 200
+    shared_buffers: "256MB"
+    effective_cache_size: "1GB"
+    work_mem: "10MB"
+    maintenance_work_mem: "64MB"
+  backup:
+    retention_days: 30
+    backup_window: "03:00-04:00"
+    preferred_backup_window: "03:00-04:00"
+
+# ============================================================================
+# CACHE CONFIGURATION
+# ============================================================================
+
+cache:
+  engine: "redis"
+  version: "7.0"
+  parameters:
+    maxmemory_policy: "allkeys-lru"
+    timeout: 300
+    tcp_keepalive: 60
+  backup:
+    enabled: true
+    snapshot_frequency: "hourly"
+
+# ============================================================================
+# MONITORING AND ALERTING
+# ============================================================================
+
+monitoring:
+  cloudwatch:
+    enabled: true
+    metrics_namespace: "ePayco"
+    log_retention_days: 30
+  
+  alarms:
+    high_cpu_threshold: 80
+    high_memory_threshold: 85
+    high_disk_threshold: 90
+    error_rate_threshold: 1.0
+
+  dashboards:
+    - name: "System Overview"
+      refresh_interval: 300
+    - name: "Service Health"
+      refresh_interval: 60
+    - name: "Payment Metrics"
+      refresh_interval: 120
+
+# ============================================================================
+# SECURITY CONFIGURATION
+# ============================================================================
+
+security:
+  encryption:
+    at_rest: true
+    in_transit: true
+    algorithm: "AES-256"
+  
+  authentication:
+    jwt_enabled: true
+    jwt_algorithm: "HS256"
+    session_timeout: 3600
+  
+  compliance:
+    pci_dss: true
+    gdpr: true
+    hipaa: false
+
+# ============================================================================
+# DEPLOYMENT CONFIGURATION
+# ============================================================================
+
+deployment:
+  strategy: "rolling"
+  max_surge: 25
+  max_unavailable: 25
+  health_check_grace_period: 60
+  termination_grace_period: 30

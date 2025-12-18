@@ -1,0 +1,65 @@
+graph TB
+subgraph "Logging (CloudWatch)"
+LOGS["JSON Structured Logs<br/>Every action tracked"]
+LOG1["payment_initiated<br/>traceId, userId, amount"]
+LOG2["fraud_check_completed<br/>score, decision"]
+LOG3["payment_confirmed<br/>authCode, duration"]
+LOG4["payment_failed<br/>errorCode, stack trace"]
+LOGS --> LOG1
+LOGS --> LOG2
+LOGS --> LOG3
+LOGS --> LOG4
+QUERY["CloudWatch Insights<br/>SQL-like queries"]
+LOG1 --> QUERY
+LOG3 --> QUERY
+end
+subgraph "Metrics (CloudWatch)"
+METRICS["CloudWatch Metrics<br/>Real-time aggregation"]
+M1["PaymentInitiated: 42/min"]
+M2["PaymentConfirmed: 41/min"]
+M3["PaymentFailed: 1/min"]
+M4["PaymentDuration P95: 420ms"]
+METRICS --> M1
+METRICS --> M2
+METRICS --> M3
+METRICS --> M4
+DASHBOARD["Dashboard<br/>Error Rate<br/>Throughput<br/>Latency"]
+M1 --> DASHBOARD
+M2 --> DASHBOARD
+M3 --> DASHBOARD
+M4 --> DASHBOARD
+end
+subgraph "Distributed Tracing (X-Ray)"
+XRAY["AWS X-Ray<br/>End-to-end visibility"]
+TRACE["Trace ID: xyz-123<br/>payment_initiate (total: 350ms)"]
+SEG1["├─ auth check: 2ms"]
+SEG2["├─ wallet reserve: 15ms"]
+SEG3["├─ fraud score: 300ms"]
+SEG4["└─ bank call: 25ms (async)"]
+XRAY --> TRACE
+TRACE --> SEG1
+TRACE --> SEG2
+TRACE --> SEG3
+TRACE --> SEG4
+SMAP["Service Map<br/>Payment → Wallet → RDS<br/>Payment → Fraud → ML<br/>Payment → Bank"]
+TRACE --> SMAP
+end
+style LOGS fill:#3498db
+style LOG1 fill:#2ecc71
+style LOG2 fill:#2ecc71
+style LOG3 fill:#2ecc71
+style LOG4 fill:#e74c3c
+style QUERY fill:#9b59b6
+style METRICS fill:#3498db
+style M1 fill:#2ecc71
+style M2 fill:#2ecc71
+style M3 fill:#e74c3c
+style M4 fill:#27ae60
+style DASHBOARD fill:#f39c12
+style XRAY fill:#3498db
+style TRACE fill:#9b59b6
+style SEG1 fill:#2ecc71
+style SEG2 fill:#2ecc71
+style SEG3 fill:#2ecc71
+style SEG4 fill:#2ecc71
+style SMAP fill:#f39c12

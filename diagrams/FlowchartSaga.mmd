@@ -1,0 +1,44 @@
+flowchart TD
+START["START: executePaymentSaga<br/>Recibe: InitiatePaymentCommand"]
+START --> VALIDATE["VALIDATE & RESERVE<br/>Wallet Service<br/>← Fondos de reserva"]
+VALIDATE -->|Éxito| RESERVED["FUNDS_RESERVED<br/>Cantidad bloqueada (TTL: 10m)<br/>Añadir compensación: liberar"]
+VALIDATE -->|Fallo| FAIL1["FAIL: Fondos insuficientes<br/>No se necesitan compensaciones"]
+RESERVED --> FRAUD["FRAUD CHECK<br/>Servicio de fraude<br/>← Score de transacción"]
+FRAUD -->|Score < 0.7| PASSED["FRAUD_CHECKED<br/>Riesgo bajo<br/>Continuar →"]
+FRAUD -->|Score > 0.7| FAIL2["FAIL: Fraud Blocked<br/>Compensaciones:<br/>1. Liberar fondos"]
+PASSED --> BANK["PROCESS BANK<br/>Bank Gateway<br/>← Call /process-payment"]
+BANK -->|Success| CONFIRMED["CONFIRMED<br/>status = CONFIRMED<br/>Añadir compensación: reembolso"]
+BANK -->|Timeout| RETRY["RETRY<br/>Retroceso exponencial<br/>Max 3 attempts"]
+RETRY -->|Success| CONFIRMED
+RETRY -->|All failed| FAIL3["FAIL: Banco no disponible<br/>Compensaciones:<br/>1. Pago de reembolso<br/>2. Liberar fondos"]
+FAIL1 --> END1["END: FAILED"]
+FAIL2 --> COMP["COMPENSATION"]
+FAIL3 --> COMP
+COMP --> COMP1["Ejecutar compensación #1:<br/>Liberación wallet"]
+COMP1 -->|Success| COMP2["Ejecutar compensación #2:<br/>Reembolso en el banco"]
+COMP1 -->|Failure| ALERT["ALERT OPS<br/>Se necesita revisión manual"]
+COMP2 -->|Success| END2["END: FAILED_COMPENSATED"]
+COMP2 -->|Failure| ALERT
+CONFIRMED --> SUCCESS["SUCCESS<br/>status = CONFIRMED<br/>Publish: PaymentConfirmed<br/>Notificaciones enviadas"]
+SUCCESS --> END3["END: CONFIRMED"]
+ALERT --> MANUAL["Manual Ops<br/>Restaurar wallet<br/>Actualizar status"]
+style START fill:#3498db
+style VALIDATE fill:#2ecc71
+style RESERVED fill:#27ae60
+style FAIL1 fill:#e74c3c
+style FRAUD fill:#2ecc71
+style PASSED fill:#27ae60
+style FAIL2 fill:#e74c3c
+style BANK fill:#2ecc71
+style CONFIRMED fill:#27ae60
+style RETRY fill:#f39c12
+style FAIL3 fill:#e74c3c
+style COMP fill:#e74c3c
+style COMP1 fill:#e67e22
+style COMP2 fill:#e67e22
+style ALERT fill:#c0392b
+style SUCCESS fill:#27ae60
+style END1 fill:#95a5a6
+style END2 fill:#95a5a6
+style END3 fill:#27ae60
+style MANUAL fill:#f39c12

@@ -1,0 +1,44 @@
+graph TB
+subgraph "Messaging Architecture - SAGA Orquestada"
+APP["Payment API"]
+ORCH["Orquestador de transacciones<br/>(Lambda/ECS)"]
+subgraph "Queues & Topics"
+SQS1["SQS FIFO: payment-queue<br/>Guarantee: Order by user_id<br/>Deduplication: 5 min"]
+SNS_RESERVE["SNS: WalletReserved"]
+SNS_FRAUD["SNS: FraudCheckPassed"]
+SNS_SUCCESS["SNS: PaymentConfirmed"]
+SNS_FAILED["SNS: PaymentFailed"]
+end
+subgraph "Subscribers"
+WALLET["Wallet Service<br/>Actualizar saldo"]
+FRAUD["Fraud Service<br/>Score de transacción"]
+PAYMENT["Payment Service<br/>Tramite en el banco"]
+NOTIF["Notification Service<br/>Enviar correo electrónico/SMS"]
+MERCHANT["Merchant Service<br/>cuenta de crédito"]
+AUDIT["Audit Service<br/>Log transacción"]
+end
+end
+APP -->|Initiate| ORCH
+ORCH -->|Enqueue| SQS1
+ORCH -->|Trigger| SNS_RESERVE
+SQS1 -->|Worker| WALLET
+SNS_RESERVE -->|Subscribe| FRAUD
+SNS_FRAUD -->|Trigger| PAYMENT
+SNS_SUCCESS -->|Subscribe| NOTIF
+SNS_SUCCESS -->|Subscribe| MERCHANT
+SNS_SUCCESS -->|Subscribe| AUDIT
+SNS_FAILED -->|Subscribe| WALLET
+SNS_FAILED -->|Subscribe| NOTIF
+style APP fill:#3498db
+style ORCH fill:#e74c3c
+style SQS1 fill:#9b59b6
+style SNS_RESERVE fill:#f39c12
+style SNS_FRAUD fill:#f39c12
+style SNS_SUCCESS fill:#f39c12
+style SNS_FAILED fill:#f39c12
+style WALLET fill:#2ecc71
+style FRAUD fill:#2ecc71
+style PAYMENT fill:#2ecc71
+style NOTIF fill:#2ecc71
+style MERCHANT fill:#2ecc71
+style AUDIT fill:#2ecc71

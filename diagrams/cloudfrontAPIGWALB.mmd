@@ -1,0 +1,25 @@
+graph TD
+INTERNET["Internet<br/>Usuarios, Comercios"]
+INTERNET -->|HTTPS| ROUTE53["Route 53<br/>Geolocalización<br/>Health Checks"]
+ROUTE53 -->|colombia| CF["CloudFront<br/>200+ PoPs globales<br/>DDoS Protection"]
+ROUTE53 -->|latam| APIGW["API Gateway<br/>REST/WebSocket<br/>Rate Limiting"]
+CF -->|/static/*| STATIC["Static Assets<br/>TTL: 1h - 30d<br/>Compression"]
+CF -->|/api/*| ALB["ALB<br/>Path-based routing"]
+APIGW -->|/api/*| ALB
+ALB -->|/auth| AUTH_TG["Target Group<br/>Auth Service<br/>10 tasks"]
+ALB -->|/payments| PAYMENT_TG["Target Group<br/>Payment Service<br/>10 tasks"]
+ALB -->|/fraud| FRAUD_TG["Target Group<br/>Fraud Service<br/>5 tasks"]
+AUTH_TG --> AUTH["Auth Service<br/>JWT, MFA"]
+PAYMENT_TG --> PAYMENT["Payment Service<br/>SAGA Orchestration"]
+FRAUD_TG --> FRAUD["Fraud Service<br/>Scoring, ML"]
+style INTERNET fill:#3498db
+style ROUTE53 fill:#9b59b6
+style CF fill:#f39c12
+style APIGW fill:#1abc9c
+style ALB fill:#e74c3c
+style AUTH_TG fill:#2ecc71
+style PAYMENT_TG fill:#2ecc71
+style FRAUD_TG fill:#2ecc71
+style AUTH fill:#34e
+style PAYMENT fill:#34e
+style FRAUD fill:#34e

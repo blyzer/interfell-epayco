@@ -1,0 +1,32 @@
+graph TB
+subgraph "Orquestada (Elegida)"
+ORCH["Coordinador Central<br/>PaymentOrchestrator<br/>Controla flujo"]
+STEP1["Step 1: Validate User<br/>→ Auth Service"]
+STEP2["Step 2: Reserve Funds<br/>→ Wallet Service"]
+STEP3["Step 3: Fraud Check<br/>→ Fraud Service"]
+STEP4["Step 4: Process Bank<br/>→ Bank Gateway"]
+ORCH -->|Ejecuta| STEP1
+STEP1 -->|Si OK| STEP2
+STEP2 -->|Si OK| STEP3
+STEP3 -->|Si OK| STEP4
+STEP3 -->|Si BLOQUEADO| COMP["Compensación<br/>Release funds"]
+STEP4 -->|Si FALLA| COMP
+end
+subgraph "Coreografiada (Rechazada)"
+EVENT1["Wallet emite:<br/>FundsReserved"]
+EVENT2["Fraud escucha<br/>FraudCheckStart"]
+EVENT3["Payment escucha<br/>FraudCheckPassed"]
+EVENT4["Bank escucha<br/>ProcessPaymentStart"]
+EVENT1 -->|¿quién va primero?| PROBLEM["Inconsistencia<br/>Fraud bloquea pero<br/>Bank ya procesó"]
+end
+style ORCH fill:#2ecc71
+style STEP1 fill:#3498db
+style STEP2 fill:#3498db
+style STEP3 fill:#3498db
+style STEP4 fill:#3498db
+style COMP fill:#e74c3c
+style EVENT1 fill:#f39c12
+style EVENT2 fill:#f39c12
+style EVENT3 fill:#f39c12
+style EVENT4 fill:#f39c12
+style PROBLEM fill:#e74c3c
